@@ -14,6 +14,10 @@ const Device = struct {
     interface_number2: u8,
 };
 
+const HERCULES_MP3 = Device { .product_id = 0xb120, .interface_number = 1, .ep_in = 0x82, .ep_out = 0x03, .ep_in2 = 0x0, .interface_number2 = 0 };
+
+const HERCULES_VENDOR_ID: u16 = 0x6f8;
+
 var context: ?*(c.libusb_context) = null;
 
 pub fn usb_setup(name: []u8, namelen: usize) !isize {
@@ -39,6 +43,8 @@ pub fn usb_setup(name: []u8, namelen: usize) !isize {
 
     var index: usize = 0;
 
+    var hercules_device: c.libusb_device_descriptor = undefined;
+
     while (index < count) {
         var device = devs[index];
         var device_descriptor: c.libusb_device_descriptor = undefined;
@@ -47,8 +53,20 @@ pub fn usb_setup(name: []u8, namelen: usize) !isize {
             try stdout.print("Could not get devide decriptor at index {}", .{index});
         }
 
+        try stdout.print("Device info {x:0>4.4}:{x:0>4.4} \n", .{device_descriptor.idVendor, device_descriptor.idProduct});
+
+        if (device_descriptor.idVendor == HERCULES_VENDOR_ID) {
+            try stdout.print("Found Hercules device.\n", .{});
+            hercules_device = device_descriptor;
+        }
+
         index += 1;
     }
+    c.libusb_free_device_list(devs, 1);
+
+    var usb_device = c.libusb_open_device_with_vid_pid(context, HERCULES_VENDOR_ID, HERCULES_MP3.product_id);
+
+    try stdout.print("Hercules device : {s}\n", .{usb_device});
 
     return count;
 }
