@@ -1,3 +1,9 @@
+# Zig specific files
+zig-cache
+zig-out
+
+#artifacts/*
+
 # Prerequisites
 *.d
 
