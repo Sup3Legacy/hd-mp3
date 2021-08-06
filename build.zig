@@ -16,7 +16,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.setBuildMode(mode);
     exe.install();
     exe.linkSystemLibrary("c");
-    exe.linkSystemLibrary("usb-1.0");
+    exe.linkSystemLibrary("hidapi-libusb");
 
     const run_cmd = exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
