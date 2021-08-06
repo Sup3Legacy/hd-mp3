@@ -21,14 +21,9 @@ pub fn setup() !void {
     var str: [4 * MAX_STR:0]u8 align(4) = undefined;
     
     var res = c.hid_init();
-    try stdout.print("Got res : {x}\n", .{@intCast(usize, res)});
     HANDLE = c.hid_open(0x06f8, 0xd001, null);
 
-    try stdout.print("Ousp {}\n", .{HANDLE});
-
     res = c.hid_get_manufacturer_string(HANDLE, @ptrCast([*c]c_int, &str), MAX_STR);
-
-    try stdout.print("Aïe.\n", .{});
     try stdout.print("Device manufacturer : {s}\n", .{str});
 
     res = c.hid_get_product_string(HANDLE, @ptrCast([*c]c_int, &str), MAX_STR);
