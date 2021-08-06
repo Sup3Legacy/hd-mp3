@@ -15,37 +15,41 @@ const MAX_STR: c_int = 255;
 
 var MP3_STATE: mp3.Controller = undefined;
 
+var HANDLE: ?*c.struct_hid_device_ = undefined;
+
 pub fn setup() !void {
     var str: [4 * MAX_STR:0]u8 align(4) = undefined;
-    var buffer: [2][20]u8 = undefined;
     
     var res = c.hid_init();
     try stdout.print("Got res : {x}\n", .{@intCast(usize, res)});
-    var handle = c.hid_open(0x06f8, 0xd001, null);
+    HANDLE = c.hid_open(0x06f8, 0xd001, null);
 
-    try stdout.print("Ousp {}\n", .{handle});
+    try stdout.print("Ousp {}\n", .{HANDLE});
 
-    res = c.hid_get_manufacturer_string(handle, @ptrCast([*c]c_int, &str), MAX_STR);
+    res = c.hid_get_manufacturer_string(HANDLE, @ptrCast([*c]c_int, &str), MAX_STR);
 
     try stdout.print("Aïe.\n", .{});
     try stdout.print("Device manufacturer : {s}\n", .{str});
 
-    res = c.hid_get_product_string(handle, @ptrCast([*c]c_int, &str), MAX_STR);
+    res = c.hid_get_product_string(HANDLE, @ptrCast([*c]c_int, &str), MAX_STR);
     try stdout.print("Device profuct : {s}\n", .{str});
 
-    res = c.hid_get_serial_number_string(handle, @ptrCast([*c]c_int, &str), MAX_STR);
+    res = c.hid_get_serial_number_string(HANDLE, @ptrCast([*c]c_int, &str), MAX_STR);
     try stdout.print("Device serial number : {s}\n", .{str});
 
-    res = c.hid_get_indexed_string(handle, 1, @ptrCast([*c]c_int, &str), MAX_STR);
+    res = c.hid_get_indexed_string(HANDLE, 1, @ptrCast([*c]c_int, &str), MAX_STR);
     try stdout.print("Device indexed string 1 : {s}\n", .{str});
 
+    //res = c.hid_set_nonblocking(HANDLE, 1);
+}
+
+pub fn poll() !void {
+    var buffer: [2][20]u8 = undefined;
     var buffer_index: usize = 0;
 
-    //res = c.hid_set_nonblocking(handle, 1);
-    
     while (true) {
         // Read requested state
-        res = c.hid_read(handle, @ptrCast([*c] u8, &(buffer[buffer_index])), 20);
+        res = c.hid_read(HANDLE, @ptrCast([*c] u8, &(buffer[buffer_index])), 20);
 
         // Print out the returned buffer.
         if (res > 0 and !mem.eql(u8, &buffer[buffer_index], &buffer[1 - buffer_index])) {
