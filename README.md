@@ -1,3 +1,5 @@
 # hd-mp3
 
-Attempt at writting a custom userspace driver for the Hercules DJ Control MP3.
+Custom userspace HID driver for the Hercules DJ Control MP3.
+
+Should allow in the future to define custom procedures spawned at specific value change.
