@@ -17,11 +17,25 @@ var MP3_STATE: mp3.Controller = undefined;
 
 var HANDLE: ?*c.struct_hid_device_ = undefined;
 
+const HID_ERROR = error {
+    INIT_FAILED,
+    DEVICE_UNAVAILABLE,
+};
+
 pub fn setup() !void {
     var str: [4 * MAX_STR:0]u8 align(4) = undefined;
     
     var res = c.hid_init();
+
+    if (res < 0) {
+        return HID_ERROR.INIT_FAILED;
+    }
+
     HANDLE = c.hid_open(0x06f8, 0xd001, null);
+
+    if (HANDLE == null) {
+        return HID_ERROR.DEVICE_UNAVAILABLE;
+    }
 
     res = c.hid_get_manufacturer_string(HANDLE, @ptrCast([*c]c_int, &str), MAX_STR);
     try stdout.print("Device manufacturer : {s}\n", .{str});
@@ -44,14 +58,14 @@ pub fn poll() !void {
 
     while (true) {
         // Read requested state
-        res = c.hid_read(HANDLE, @ptrCast([*c] u8, &(buffer[buffer_index])), 20);
+        var res = c.hid_read(HANDLE, @ptrCast([*c] u8, &(buffer[buffer_index])), 20);
 
         // Print out the returned buffer.
         if (res > 0 and !mem.eql(u8, &buffer[buffer_index], &buffer[1 - buffer_index])) {
             try stdout.print("res : {}. Got bytes :", .{res});
             var i: usize = 0;
             while (i < res) : (i += 1) {
-                try stdout.print(" {d:0>8}", .{buffer[buffer_index][i]});
+                try stdout.print(" {d:0>3}", .{buffer[buffer_index][i]});
             }
             try stdout.print("\n", .{});
             MP3_STATE.update(&buffer[buffer_index]);
