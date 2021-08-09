@@ -5,5 +5,6 @@ const stdout = std.io.getStdOut().writer();
 
 pub fn main() !void {
     try usb.setup();
-    try usb.poll();
+    try usb.testing();
+    //try usb.poll();
 }

@@ -8,12 +8,14 @@ var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 const allocator = &arena.allocator;
 const mem = std.mem;
 const mp3 = @import("mp3.zig");
+const led = @import("led.zig");
 
 var HID_DEVICE: c.hid_device = undefined;
 
 const MAX_STR: c_int = 255;
 
 var MP3_STATE: mp3.Controller = undefined;
+var LED_STATE = led.LedState.new();
 
 var HANDLE: ?*c.struct_hid_device_ = undefined;
 
@@ -57,10 +59,8 @@ pub fn poll() !void {
     var buffer_index: usize = 0;
 
     while (true) {
-        // Read requested state
         var res = c.hid_read(HANDLE, @ptrCast([*c] u8, &(buffer[buffer_index])), 20);
 
-        // Print out the returned buffer.
         if (res > 0 and !mem.eql(u8, &buffer[buffer_index], &buffer[1 - buffer_index])) {
             try stdout.print("res : {}. Got bytes :", .{res});
             var i: usize = 0;
@@ -73,4 +73,19 @@ pub fn poll() !void {
 
         buffer_index = 1 - buffer_index;
     }
+}
+
+pub fn testing() !void {
+    var buffer: [3]u8 = undefined;
+
+    var index: usize = 0;
+    while (index < 3) : (index += 1) {
+        buffer[index] = 0;
+    }
+
+    buffer[0] = 0x01;
+    buffer[1] = 0b00000000;
+    buffer[2] = 0b00000000;
+    
+    _ = c.hid_write(HANDLE, @ptrCast([*c] u8, &buffer), 3);
 }
