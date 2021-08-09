@@ -10,10 +10,11 @@ pub fn Component(comptime T: type) type {
             this.value = new_value;
 
             if (old_value != new_value) {
-                //if(this.on_update) |func| {
+                if(this.on_update) |func| {
+                    func(old_value, new_value);
                     //var th = std.Thread.spawn(.{}, this.initThread, .{func, old_value, new_value}) catch return;
                     //th.join();
-                //}
+                }
             }
         }
 

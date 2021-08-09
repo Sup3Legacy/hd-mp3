@@ -1,133 +1,45 @@
-const LedInfo = struct {
-    byte: u8,
-    value: u8,
+const std = @import("std");
+const stdout = std.io.getStdOut().writer();
+
+pub const LED = enum(u8) {
+    LeftBeatLock = 1,
+    RightBeatLock = 2,
+    LeftFx = 3,
+    RightFx = 4,
+    RightCue = 5,
+    RightCueButton = 6,
+    RightPlay = 7,
+    LeftCue = 8,
+    LeftPlay = 9,
+    LeftHeadset = 10,
+    RightHeadset = 11,
+    LeftCueButton = 12,
+    LeftAutoBeat = 13,
+    RightAutoBeat = 14,
+    LeftLoop = 15,
+    RightLoop = 16,
 };
 
-const HalfLedArray = struct {
-    play: LedInfo,
-    cue_button: LedInfo,
-    headset: LedInfo,
-    auto_beat: LedInfo,
-    beat_lock: LedInfo,
-    fx: LedInfo,
-    cue: LedInfo,
-    loop: LedInfo,
-};
-
-const LedArray = struct {
-    left: HalfLedArray,
-    right: HalfLedArray,
-};
-
-const LEDMapping = LedArray {
-    .left = HalfLedArray {
-        .play = LedInfo {
-            .byte = 2,
-            .value = 1,
-        },
-        .cue_button = LedInfo {
-            .byte = 2,
-            .value = 8,
-        },
-        .headset = LedInfo {
-            .byte = 2,
-            .value = 2,
-        },
-        .auto_beat = LedInfo {
-            .byte = 2,
-            .value = 16,
-        },
-        .beat_lock = LedInfo {
-            .byte = 1,
-            .value = 1,
-        },
-        .fx = LedInfo {
-            .byte = 1,
-            .value = 4,
-        },
-        .cue = LedInfo {
-            .byte = 1,
-            .value = 128,
-        },
-        .loop = LedInfo {
-            .byte = 2,
-            .value = 64,
-        },
-    },
-    .right = HalfLedArray {
-        .play = LedInfo {
-            .byte = 1,
-            .value = 64,
-        },
-        .cue_button = LedInfo {
-            .byte = 1,
-            .value = 32,
-        },
-        .headset = LedInfo {
-            .byte = 2,
-            .value = 4,
-        },
-        .auto_beat = LedInfo {
-            .byte = 2,
-            .value = 32,
-        },
-        .beat_lock = LedInfo {
-            .byte = 1,
-            .value = 2,
-        },
-        .fx = LedInfo {
-            .byte = 1,
-            .value = 8,
-        },
-        .cue = LedInfo {
-            .byte = 1,
-            .value = 16,
-        },
-        .loop = LedInfo {
-            .byte = 2,
-            .value = 128,
-        },
-    },
-};
-
-
-const HalfLedState = struct {
-    play: bool,
-    cue_button: bool,
-    headset: bool,
-    auto_beat: bool,
-    beat_lock: bool,
-    fx: bool,
-    cue: bool,
-    loop: bool,
-};
-
-const LedState = struct {
-    left: HalfLedState,
-    right: HalfLedState,
+const LedState = packed struct {
+    first: [8]bool,
+    last: [8]bool,
 
     pub fn new() @This() {
         return LedState {
-            .left = HalfLedState {
-                .play = false,
-                .cue_button = false,
-                .headset = false,
-                .auto_beat = false,
-                .beat_lock = false,
-                .fx = false,
-                .cue = false,
-                .loop = false,
-            },
-            .right = HalfLedState {
-                .play = false,
-                .cue_button = false,
-                .headset = false,
-                .auto_beat = false,
-                .beat_lock = false,
-                .fx = false,
-                .cue = false,
-                .loop = false,
-            },
+            .values = [_]bool{false} ** 16
         };
     }
 };
+
+pub fn ledToBytes(a: LED, p: *[2]u8) void {
+    var i = @enumToInt(a) - 1;
+    var unite: u8 = 1;
+    //stdout.print("Got {}\n", .{i + 1}) catch return;
+    if (i >= 8) {
+        p[0] = 0;
+        p[1] = unite << @intCast(u3, i - 8);
+    } else {
+        p[0] = unite << @intCast(u3, i);
+        p[1] = 0;
+    }
+}

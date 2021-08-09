@@ -19,6 +19,8 @@ var LED_STATE = led.LedState.new();
 
 var HANDLE: ?*c.struct_hid_device_ = undefined;
 
+var LED_BUFFER = [3]u8{0x01, 0, 0};
+
 const HID_ERROR = error {
     INIT_FAILED,
     DEVICE_UNAVAILABLE,
@@ -88,4 +90,25 @@ pub fn testing() !void {
     buffer[2] = 0b00000000;
     
     _ = c.hid_write(HANDLE, @ptrCast([*c] u8, &buffer), 3);
+}
+
+pub fn ledOn(ledArg: led.LED) void {
+    var bytes = [2]u8{0, 0};
+    led.ledToBytes(ledArg, &bytes);
+    LED_BUFFER[1] |= bytes[0];
+    LED_BUFFER[2] |= bytes[1];
+    ledUpdate();
+}
+
+pub fn ledOff(ledArg: led.LED) void {
+    var bytes = [2]u8{0, 0};
+    led.ledToBytes(ledArg, &bytes);
+    LED_BUFFER[1] &= ~bytes[0];
+    LED_BUFFER[2] &= ~bytes[1];
+    ledUpdate();
+}
+
+pub fn ledUpdate() void {
+    LED_BUFFER[0] = 0x01;
+    _ = c.hid_write(HANDLE, @ptrCast([*c] u8, &LED_BUFFER), 3);
 }
