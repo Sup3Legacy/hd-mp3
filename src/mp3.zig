@@ -1,4 +1,5 @@
 const std = @import("std");
+const stdout = std.io.getStdOut().writer();
 
 pub fn Component(comptime T: type) type {
     return struct {

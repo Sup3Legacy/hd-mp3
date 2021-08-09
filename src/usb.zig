@@ -14,7 +14,7 @@ var HID_DEVICE: c.hid_device = undefined;
 
 const MAX_STR: c_int = 255;
 
-var MP3_STATE: mp3.Controller = undefined;
+pub var MP3_STATE: mp3.Controller = undefined;
 var LED_STATE = led.LedState.new();
 
 var HANDLE: ?*c.struct_hid_device_ = undefined;
