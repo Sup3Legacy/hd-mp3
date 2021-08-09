@@ -53,7 +53,7 @@ pub fn setup() !void {
     res = c.hid_get_indexed_string(HANDLE, 1, @ptrCast([*c]c_int, &str), MAX_STR);
     try stdout.print("Device indexed string 1 : {s}\n", .{str});
 
-    //res = c.hid_set_nonblocking(HANDLE, 1);
+    res = c.hid_set_nonblocking(HANDLE, 1);
 }
 
 pub fn poll() !void {
@@ -63,17 +63,23 @@ pub fn poll() !void {
     while (true) {
         var res = c.hid_read(HANDLE, @ptrCast([*c] u8, &(buffer[buffer_index])), 20);
 
-        if (res > 0 and !mem.eql(u8, &buffer[buffer_index], &buffer[1 - buffer_index])) {
-            try stdout.print("res : {}. Got bytes :", .{res});
-            var i: usize = 0;
-            while (i < res) : (i += 1) {
-                try stdout.print(" {d:0>3}", .{buffer[buffer_index][i]});
+        if (res > 0) {
+            while (res != 0) {
+                res = c.hid_read(HANDLE, @ptrCast([*c] u8, &(buffer[buffer_index])), 20);
             }
-            try stdout.print("\n", .{});
-            MP3_STATE.update(&buffer[buffer_index]);
+            if (!mem.eql(u8, &buffer[buffer_index], &buffer[1 - buffer_index])) {
+                try stdout.print("res : {}. Got bytes :", .{res});
+                var i: usize = 0;
+                while (i < 20) : (i += 1) {
+                    try stdout.print(" {d:0>3}", .{buffer[buffer_index][i]});
+                }
+                try stdout.print("\n", .{});
+                MP3_STATE.update(&buffer[buffer_index]);
+            }
         }
 
         buffer_index = 1 - buffer_index;
+        std.os.nanosleep(0, 10000000);
     }
 }
 
