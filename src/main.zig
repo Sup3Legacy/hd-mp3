@@ -3,18 +3,22 @@ const mem = std.mem;
 const testing = std.testing;
 const usb = @import("usb.zig");
 const led = @import("led.zig");
+const priority_queue = @import("priority_queue.zig");
 const stdout = std.io.getStdOut().writer();
 
 var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 const allocator = &arena.allocator;
 
 pub fn main() !void {
-    try usb.setup();
-    usb.MP3_STATE.right.volume.on_update = change_volume;
-    //usb.ledOn(led.LED.RightAutoBeat);
-    //usb.ledOn(led.LED.RightHeadset);
-    //usb.ledOff(led.LED.RightHeadset);
-    try usb.poll();
+    const pqt = priority_queue.PriorityQueue(usize, usize, 42, lol);
+    var pq: pqt = pqt.new();
+    try pq.enqueue(42, 3);
+    try pq.enqueue(69, 2);
+    try pq.enqueue(420, 1);
+    try pq.enqueue(123, 4);
+    try stdout.print("Got {d}\n", .{(pq.peek() catch return).*});
+    return;
+    
 }
 
 pub fn change_volume(_: u8, volume: u8) void {
@@ -31,4 +35,18 @@ pub fn change_volume(_: u8, volume: u8) void {
         std.process.execv(allocator, command[0..]) catch return;
         std.process.exit(0);
     }
+}
+
+pub fn lol(a: *usize, b: *usize) bool {
+    return a.* < b.*;
+}
+
+test "priority" {
+    const pqt = priority_queue.PriorityQueue(usize, usize, 42, lol);
+    var pq: pqt = pqt.new();
+    try pq.enqueue(42, 3);
+    try pq.enqueue(69, 0);
+    try pq.enqueue(420, 1);
+    try pq.enqueue(123, 4);
+    try stdout.print("Got {d}\n", .{pq.peek()});
 }
