@@ -11,9 +11,9 @@ const allocator = &arena.allocator;
 pub fn main() !void {
     try usb.setup();
     usb.MP3_STATE.right.volume.on_update = change_volume;
-    usb.ledOn(led.LED.RightAutoBeat);
-    usb.ledOn(led.LED.RightHeadset);
-    usb.ledOff(led.LED.RightHeadset);
+    //usb.ledOn(led.LED.RightAutoBeat);
+    //usb.ledOn(led.LED.RightHeadset);
+    //usb.ledOff(led.LED.RightHeadset);
     try usb.poll();
 }
 
