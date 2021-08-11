@@ -2,11 +2,13 @@ const std = @import("std");
 const led_src = @import("led.zig");
 const priority_queue = @import("priority_queue.zig");
 const com_queue = @import("com_queue.zig");
+const usb = @import("usb.zig");
+const stdout = std.io.getStdOut().writer();
 
 // Mailbox will be checked at least every MAX_INTERVAL ms.
 const MAX_INTERVAL: usize = 100; 
 
-const LedBlink = struct {
+pub const LedBlink = struct {
     offset: usize, // Note used anymore once enqueued
     up_time: usize, 
     down_time: usize,
@@ -20,7 +22,7 @@ const LedEventEnum = enum  {
     Off,
 };
 
-const LedEvent = union(LedEventEnum) {
+pub const LedEvent = union(LedEventEnum) {
     Blink: LedBlink,
     On: led_src.LED,
     Off: led_src.LED,
@@ -34,7 +36,7 @@ const queueType = priority_queue.PriorityQueue(LedBlink, usize, 16, order);
 
 var Queue = queueType.new();
 
-var ComQueue = com_queue.ComQueue(LedEvent, 64).new();
+pub var ComQueue = com_queue.ComQueue(LedEvent, 64).new();
 
 pub fn ledScheduler() !void {
     var blink_enabled = [1]bool{false}**16;
@@ -45,14 +47,17 @@ pub fn ledScheduler() !void {
 
     // Main loop
     while (true) {
+        //try stdout.print("Hihou.\n", .{});
         // Fetch messages from mailbox
         while (!ComQueue.is_empty()) {
+            //try stdout.print("Got packet.\n", .{});
             var new_packet = try ComQueue.pop();
             switch (new_packet) {
                 LedEvent.Blink => |BlinkPacket| {
                     var index = @enumToInt(BlinkPacket.led) - 1;
                     if (!blink_enabled[index]) {
                         try Queue.enqueue(BlinkPacket, timestamp + BlinkPacket.offset);
+                        blink_enabled[index] = true;
                         on[index] = false;
                         off[index] = false;
                     }
@@ -76,10 +81,12 @@ pub fn ledScheduler() !void {
         // Loop while there are events to
         while (true) {
             var top = Queue.peek() catch break;
+            //try stdout.print("Ousp.\n", .{});
                 var index = @enumToInt(top.led) - 1;
 
                 // Blinking has been deactivated
                 if (!blink_enabled[index]) {
+                    try stdout.print("Mince.\n", .{});
                     _ = try Queue.pop();
                     // Turn off the LED ?
                     continue;
@@ -97,10 +104,17 @@ pub fn ledScheduler() !void {
                         next_time = local_next_time;
                     }
 
+                    top.state = !top.state;
+                    //try stdout.print("Gonna switch LED.\n", .{});
                     // Handle LED logic
+                    if (top.state) {
+                        usb.ledOn(top.led);
+                    } else {
+                        usb.ledOff(top.led);
+                    }
 
                     // Invert LED state in the queue
-                    top.state = !top.state;
+                    
 
                     try Queue.update_priority(timestamp + local_next_time);
                 } else {
@@ -109,8 +123,10 @@ pub fn ledScheduler() !void {
                 }
         }
             
-        var next_time_corrected = @minimum(MAX_INTERVAL * 1000, next_time);
+        var next_time_corrected = @minimum(MAX_INTERVAL, next_time);
         timestamp += next_time_corrected;
-        std.os.nanosleep(0, next_time_corrected);
+        //try stdout.print("Got as time : {}\n", .{next_time_corrected});
+        usb.ledUpdate();
+        std.os.nanosleep(next_time_corrected / 1000, (next_time_corrected % 1000) * 1000000);
     }
 }

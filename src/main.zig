@@ -11,21 +11,38 @@ var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 const allocator = &arena.allocator;
 
 pub fn main() !void {
-    const pqt = priority_queue.PriorityQueue(usize, usize, 42, lol);
-    var pq: pqt = pqt.new();
-    try pq.enqueue(42, 3);
-    try pq.enqueue(69, 2);
-    try pq.enqueue(420, 1);
-    try pq.enqueue(123, 4);
-    try pq.enqueue(12, 0);
-    try pq.update_priority(5);
-    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
-    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
-    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
-    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
-    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
-
+    try usb.setup();
     _ = try std.Thread.spawn(.{},led_scheduler.ledScheduler, .{});
+    try led_scheduler.ComQueue.push(led_scheduler.LedEvent {
+        .Blink = led_scheduler.LedBlink {
+            .offset = 0,
+            .up_time = 500,
+            .down_time = 500,
+            .state = false,
+            .led = led.LED.RightHeadset,
+        } 
+        });
+    try led_scheduler.ComQueue.push(led_scheduler.LedEvent {
+        .Blink = led_scheduler.LedBlink {
+            .offset = 0,
+            .up_time = 250,
+            .down_time = 250,
+            .state = false,
+            .led = led.LED.LeftHeadset,
+        } 
+        });
+    try led_scheduler.ComQueue.push(led_scheduler.LedEvent {
+        .Blink = led_scheduler.LedBlink {
+            .offset = 10000,
+            .up_time = 1000,
+            .down_time = 300,
+            .state = false,
+            .led = led.LED.RightFx,
+        } 
+        });
+    while (true) {
+        std.os.nanosleep(10, 0);
+    }
     return;
     
 }

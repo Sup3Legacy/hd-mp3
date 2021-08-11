@@ -103,7 +103,7 @@ pub fn ledOn(ledArg: led.LED) void {
     led.ledToBytes(ledArg, &bytes);
     LED_BUFFER[1] |= bytes[0];
     LED_BUFFER[2] |= bytes[1];
-    ledUpdate();
+    //ledUpdate();
 }
 
 pub fn ledOff(ledArg: led.LED) void {
@@ -111,7 +111,7 @@ pub fn ledOff(ledArg: led.LED) void {
     led.ledToBytes(ledArg, &bytes);
     LED_BUFFER[1] &= ~bytes[0];
     LED_BUFFER[2] &= ~bytes[1];
-    ledUpdate();
+    //ledUpdate();
 }
 
 pub fn ledUpdate() void {

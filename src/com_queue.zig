@@ -7,7 +7,6 @@ pub fn ComQueue(comptime T: type, comptime Capacity: usize) type {
     return struct {
         const Self = @This();
         values: [Capacity]T,
-        size: usize,
         in: usize,
         out: usize,
         empty: bool,
@@ -15,7 +14,6 @@ pub fn ComQueue(comptime T: type, comptime Capacity: usize) type {
         pub fn new() Self {
             return Self {
                 .values = undefined,
-                .size = 0,
                 .in = 0,
                 .out = 0,
                 .empty = true,
@@ -31,21 +29,24 @@ pub fn ComQueue(comptime T: type, comptime Capacity: usize) type {
         }
 
         pub fn push(this: *Self, data: T) ComQueueError!void {
-            if (this.size == Capacity) {
+            if (this.is_full()) {
                 return ComQueueError.ComQueueFull;
             }
             this.values[this.in] = data;
             this.in = (this.in + 1) % Capacity;
-            this.size += 1;
+            this.empty = false;
         }
 
         pub fn pop(this: *Self) ComQueueError!T {
-            if (this.size == 0) {
+            if (this.is_empty()) {
                 return ComQueueError.ComQueueEmpty;
             }
-            defer this.size -= 1;
-            defer this.out = (this.out + 1) % Capacity;
-            return this.values[this.out];
+            var res = this.values[this.out];
+            this.out = (this.out + 1) % Capacity;
+            if (this.out == this.in) {
+                this.empty = true;
+            }
+            return res;
         }
     };
 }
