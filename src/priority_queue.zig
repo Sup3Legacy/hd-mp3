@@ -50,6 +50,14 @@ pub fn PriorityQueue(comptime T: type, comptime P: type, comptime Capacity: usiz
             }
         }
 
+        pub fn peek_priority(this: *self) PriorityQueueError!*P {
+            if (this.size == 0) {
+                return PriorityQueueError.QueueEmpty;
+            } else {
+                return &(this.queue[0].priority);
+            }
+        }
+
         // Enqueue a value
         pub fn enqueue(this: *self, data: T, prio: P) PriorityQueueError!void {
             if (this.size == Capacity) {
