@@ -40,11 +40,22 @@ pub fn main() !void {
             .led = led.LED.RightFx,
         } 
         });
-    while (true) {
-        std.os.nanosleep(10, 0);
-    }
+    usb.MP3_STATE.right.levels.bass.on_update = change_frequency;
+    try usb.poll();
     return;
     
+}
+
+pub fn change_frequency(_: u8, new_freq: u8) void {
+    led_scheduler.ComQueue.push(led_scheduler.LedEvent {
+        .Blink = led_scheduler.LedBlink {
+            .offset = 0,
+            .up_time = 125 + 4 * (@intCast(usize, new_freq)),
+            .down_time = 125 + 4 * (@intCast(usize, new_freq)),
+            .state = false,
+            .led = led.LED.RightHeadset,
+        } 
+        }) catch return;
 }
 
 pub fn change_volume(_: u8, volume: u8) void {

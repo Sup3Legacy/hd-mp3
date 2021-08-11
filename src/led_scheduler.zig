@@ -36,12 +36,16 @@ const queueType = priority_queue.PriorityQueue(LedBlink, usize, 16, order);
 
 var Queue = queueType.new();
 
-pub var ComQueue = com_queue.ComQueue(LedEvent, 64).new();
+pub var ComQueue = com_queue.ComQueue(LedEvent, 1024).new();
 
 pub fn ledScheduler() !void {
     var blink_enabled = [1]bool{false}**16;
     var on = [1]bool{false}**16;
     var off = [1]bool{true}**16;
+
+    var to_change = [1]bool{false}**16;
+    var up_time = [1]usize{0}**16;
+    var down_time = [1]usize{0}**16;
 
     var timestamp: usize = 0;
 
@@ -60,6 +64,11 @@ pub fn ledScheduler() !void {
                         blink_enabled[index] = true;
                         on[index] = false;
                         off[index] = false;
+                        break;
+                    } else {
+                        to_change[index] = true;
+                        up_time[index] = BlinkPacket.up_time;
+                        down_time[index] = BlinkPacket.down_time;
                     }
                 },
                 LedEvent.On => |led| {
@@ -92,6 +101,12 @@ pub fn ledScheduler() !void {
                     continue;
                 }
                 var prio = try Queue.peek_priority();
+                
+                if (to_change[index]) {
+                    top.up_time = up_time[index];
+                    top.down_time = down_time[index];
+                    to_change[index] = false;
+                }
                 if (prio.* <= timestamp) { // Should be == in the future
                     var local_next_time: usize = 0;
                     if (top.state) {
@@ -119,6 +134,16 @@ pub fn ledScheduler() !void {
                     try Queue.update_priority(timestamp + local_next_time);
                 } else {
                     // No more event to be handled
+                    var local_next_time: usize = 0;
+                    if (top.state) {
+                        local_next_time = top.down_time;
+                    } else {
+                        local_next_time = top.up_time;
+                    }
+
+                    if (next_time > local_next_time) {
+                        next_time = local_next_time;
+                    }
                     break;
                 }
         }
