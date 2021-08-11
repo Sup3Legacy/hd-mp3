@@ -38,6 +38,7 @@ pub fn ledScheduler() !void {
     while (true) {
         // Fetch messages from mailbox
 
+        var next_time = MAX_INTERVAL;
         // Loop while there are events to
         while (true) {
             if (Queue.peek()) |top| {
@@ -50,12 +51,16 @@ pub fn ledScheduler() !void {
                     continue;
                 }
                 var prio = try Queue.peek_priority();
-                if (prio >= timestamp) { // Should be == in the future
-                    var next_time = undefined;
+                if (prio <= timestamp) { // Should be == in the future
+                    var local_next_time = undefined;
                     if (top.state) {
-                        next_time = top.down_time;
+                        local_next_time = top.down_time;
                     } else {
-                        next_time = top.up_time;
+                        local_next_time = top.up_time;
+                    }
+
+                    if (next_time > local_next_time) {
+                        next_time = local_next_time;
                     }
 
                     // Handle LED logic
@@ -63,13 +68,19 @@ pub fn ledScheduler() !void {
                     // Invert LED state in the queue
                     top.state = ~top.state;
 
-                    Queue.update_priority(timestamp + next_time);
+                    Queue.update_priority(timestamp + local_next_time);
+                } else {
+                    // No more event to be handled
+                    break;
                 }
             } else {
-                std.os.nanosleep(0, MAX_INTERVAL * 1000);
+                // Queue is empty
+                break;
             }
         }
-
-        // handle new event.
+            
+        var next_time_corrected = @minimum(MAX_INTERVAL * 1000, next_time);
+        timestamp += next_time_corrected;
+        std.os.nanosleep(0, next_time_corrected);
     }
 }
