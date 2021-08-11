@@ -3,6 +3,7 @@ const mem = std.mem;
 const testing = std.testing;
 const usb = @import("usb.zig");
 const led = @import("led.zig");
+const led_scheduler = @import("led_scheduler.zig");
 const priority_queue = @import("priority_queue.zig");
 const stdout = std.io.getStdOut().writer();
 
@@ -23,6 +24,8 @@ pub fn main() !void {
     try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
     try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
     try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
+
+    _ = try std.Thread.spawn(.{},led_scheduler.ledScheduler, .{});
     return;
     
 }

@@ -5,7 +5,7 @@ pub const ComQueueError = error {
 
 pub fn ComQueue(comptime T: type, comptime Capacity: usize) type {
     return struct {
-        const Self @This();
+        const Self = @This();
         values: [Capacity]T,
         size: usize,
         in: usize,
@@ -31,7 +31,7 @@ pub fn ComQueue(comptime T: type, comptime Capacity: usize) type {
         }
 
         pub fn push(this: *Self, data: T) ComQueueError!void {
-            if (this.size = Capacity) {
+            if (this.size == Capacity) {
                 return ComQueueError.ComQueueFull;
             }
             this.values[this.in] = data;
