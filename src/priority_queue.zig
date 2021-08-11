@@ -88,7 +88,7 @@ pub fn PriorityQueue(comptime T: type, comptime P: type, comptime Capacity: usiz
             }
         }
 
-        pub update_priority(this: *self, p: P) PriorityQueueError!void {
+        pub fn update_priority(this: *self, p: P) PriorityQueueError!void {
             if (this.size == 0) {
                 return PriorityQueueError.QueueEmpty;
             } else {
