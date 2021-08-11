@@ -80,6 +80,15 @@ pub fn PriorityQueue(comptime T: type, comptime P: type, comptime Capacity: usiz
             }
         }
 
+        pub update_priority(this: *self, p: P) PriorityQueueError!void {
+            if (this.size == 0) {
+                return PriorityQueueError.QueueEmpty;
+            } else {
+                this.queue[0].priority = p;
+                this.percolate_down(0);
+            }
+        }
+
         fn lexico_order(this: *self, i: usize, j: usize) bool {
             if (this.compFunc(&(this.queue[i].priority), &(this.queue[j].priority))) {
                 return true;
