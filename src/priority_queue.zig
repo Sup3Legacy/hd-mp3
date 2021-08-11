@@ -3,13 +3,13 @@ pub const PriorityQueueError = error {
     QueueFull,
 };
 
-pub fn Priority(comptime P: type) type {
+pub fn Priority(comptime P: type, comptime T: type) type {
     return struct {
         priority: P,
-        value: usize,
+        value: T,
         id: usize,
 
-        pub fn new(v: usize, p: P) @This() {
+        pub fn new(v: T, p: P) @This() {
             const S = struct {
                 var x: usize = 0;
             };
@@ -26,9 +26,8 @@ pub fn Priority(comptime P: type) type {
 pub fn PriorityQueue(comptime T: type, comptime P: type, comptime Capacity: usize, fun: fn(*P, *P) bool) type {
     return struct {
         const self = @This();
-        const priority_type = Priority(P);
-        values: [Capacity]T,
-        queue: [Capacity]Priority(P),
+        const priority_type = Priority(P, T);
+        queue: [Capacity]Priority(P, T),
         size: usize,
         // compFunc(a, b) <=> a < b (if min-queue)
         compFunc: fn(*P, *P) bool,
@@ -36,7 +35,6 @@ pub fn PriorityQueue(comptime T: type, comptime P: type, comptime Capacity: usiz
         // Returns a fresh PriorityQueue
         pub fn new() self {
             return self {
-                .values = undefined,
                 .queue = undefined,
                 .size = 0,
                 .compFunc = fun,
@@ -48,7 +46,7 @@ pub fn PriorityQueue(comptime T: type, comptime P: type, comptime Capacity: usiz
             if (this.size == 0) {
                 return PriorityQueueError.QueueEmpty;
             } else {
-                return &(this.values[this.queue[0].value]);
+                return &(this.queue[0].value);
             }
         }
 
@@ -57,19 +55,28 @@ pub fn PriorityQueue(comptime T: type, comptime P: type, comptime Capacity: usiz
             if (this.size == Capacity) {
                 return PriorityQueueError.QueueFull;
             }
-            this.values[this.size] = data;
-            
-            this.queue[this.size] = priority_type.new(this.size, prio);
-            this.percolate_up(this.size);
-            // Handle priority
+            this.queue[this.size] = priority_type.new(data, prio);
             this.size += 1;
+            this.percolate_up(this.size - 1);
+            // Handle priority
+            
             return;
         }
 
         // Dequeues a value
-        pub fn dequeue(this: *self) PriorityQueueError!T {
+        pub fn pop(this: *self) PriorityQueueError!T {
             if (this.size == 0) {
                 return PriorityQueueError.QueueEmpty;
+            } else {
+                var res = this.queue[0].value;
+                if (this.size == 1) {
+                    this.size = 0;
+                    return res;
+                }
+                this.queue[0] = this.queue[this.size - 1];
+                this.size -= 1;
+                this.percolate_down(0);
+                return res;
             }
         }
 
@@ -102,9 +109,9 @@ pub fn PriorityQueue(comptime T: type, comptime P: type, comptime Capacity: usiz
             var left = 2 * index + 1;
             var right = 2 * index + 2;
             var extremum = right;
-            if (left >= self.size) {
+            if (left >= this.size) {
                 return;
-            } else if (right >= self.size or this.lexico_order(left, right)) {
+            } else if (right >= this.size or this.lexico_order(left, right)) {
                 extremum = left;
             }
             if (this.lexico_order(extremum, index)) {

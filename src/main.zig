@@ -16,7 +16,12 @@ pub fn main() !void {
     try pq.enqueue(69, 2);
     try pq.enqueue(420, 1);
     try pq.enqueue(123, 4);
-    try stdout.print("Got {d}\n", .{(pq.peek() catch return).*});
+    try pq.enqueue(12, 0);
+    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
+    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
+    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
+    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
+    try stdout.print("Got {d}\n", .{(pq.pop() catch return)});
     return;
     
 }
