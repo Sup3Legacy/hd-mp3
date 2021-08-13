@@ -134,12 +134,7 @@ pub fn ledScheduler() !void {
                     try Queue.update_priority(timestamp + local_next_time);
                 } else {
                     // No more event to be handled
-                    var local_next_time: usize = 0;
-                    if (top.state) {
-                        local_next_time = top.down_time;
-                    } else {
-                        local_next_time = top.up_time;
-                    }
+                    var local_next_time = (try Queue.peek_priority()).* - timestamp;
 
                     if (next_time > local_next_time) {
                         next_time = local_next_time;
