@@ -12,6 +12,7 @@ const allocator = &arena.allocator;
 
 pub fn main() !void {
     try usb.setup();
+    usb.MP3_STATE.right.volume.on_update = change_volume;
     _ = try std.Thread.spawn(.{},led_scheduler.ledScheduler, .{});
     try led_scheduler.ComQueue.push(led_scheduler.LedEvent {
         .Blink = led_scheduler.LedBlink {
